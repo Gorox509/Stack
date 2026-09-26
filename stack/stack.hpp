@@ -19,8 +19,9 @@ enum STACK_ERRORS {
     STACK_UNDERFLOW = 2,
     STACK_WRONG_DATA_PTR = 3,
     STACK_WRONG_CAPACITY = 4,
-
+    stack_errors_amount,
 };
+
 
 struct stack {
     size_t size = 0;
@@ -32,6 +33,8 @@ struct stack {
     ON_DEBUG(const char *var_name;)
     ON_DEBUG(size_t line;)
     ON_DEBUG(const char *last_called;)
+    ON_DEBUG(int error;)
+    ON_DEBUG(const char *err_name;)
 };
 
 

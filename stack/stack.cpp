@@ -5,20 +5,28 @@ ssize_t stack_error(struct stack *stk) {
     assert(stk != NULL);
 
     if (stk->data == NULL && (stk->size != 0 || stk->capacity != 0)) {
+        stk->error = STACK_WRONG_DATA_PTR;
+        stk->err_name = "STACK_WRONG_DATA_PTR";
         stack_dump(stk);
         return STACK_WRONG_DATA_PTR;
     }
 
     if (stk->size > stk->capacity) {
+        stk->error = STACK_OVERFLOW;
+        stk->err_name = "STACK_OVERFLOW";
         stack_dump(stk);
         return STACK_OVERFLOW;
     }
 
     if (stk->capacity == 0 && stk->data != NULL) {
+        stk->error = STACK_WRONG_CAPACITY;
+        stk->err_name = "STACK_WRONG_CAPACITY";
         stack_dump(stk);
         return STACK_WRONG_CAPACITY;
     }
 
+    stk->error = STACK_OK;
+    stk->err_name = "STACK_OK";
     return STACK_OK;
 }
 
@@ -160,21 +168,24 @@ void stack_dump(struct stack *stk) {
     assert(stk != NULL);
 
 
-    ON_DEBUG(fprintf(stderr, "Variable \"%s\" of type stack at [%p] created in %s:%lu called from function \"%s\":\n", stk->var_name, stk->ptr, stk->origin_filename, stk->line, stk->last_called);)
+    ON_DEBUG(fprintf(stderr, "\nVariable \"%s\" of type stack at [%p] created in %s:%lu called from function \"%s\":\n",
+                    stk->var_name, stk->ptr, stk->origin_filename, stk->line, stk->last_called);)
+    ON_DEBUG(if (stk->error != STACK_OK) fprintf(stderr, "Error code %d: %s",
+                                                stk->error, stk->err_name);)
 
-    fprintf(stderr, "size: %lu\n"
-                    "capacity: %lu\n"
-                    "data: [%p]\n"
+    fprintf(stderr, "\tsize: %lu\n"
+                    "\tcapacity: %lu\n"
+                    "\tdata: [%p]\n"
     , stk->size, stk->capacity, stk->data
     );
 
     for (size_t i = 0; i < stk->size; ++i) {
-        fprintf(stderr, "* data[%lu] = %lf\n", i, stk->data[i]);
+        fprintf(stderr, "\t\t* data[%lu] = %lf\n", i, stk->data[i]);
     }
 
     for (size_t i = stk->size; i < stk->capacity; ++i) {
-        fprintf(stderr, "  data[%lu] = %lf\n", i, stk->data[i]);
+        fprintf(stderr, "\t\t  data[%lu] = %lf\n", i, stk->data[i]);
     }
 
-    fprintf(stderr, "\n");
+    fprintf(stderr, "\n\n");
 }
