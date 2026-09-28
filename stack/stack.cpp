@@ -107,9 +107,10 @@ ssize_t stack_shrink(struct stack *stk) {
 
     if ((err = stack_error(stk)) != STACK_OK)
         return err;
+    size_t new_capacity = stk->capacity / 2 + stk->capacity % 2;
 
-    stk->data = (stack_elem_t *) realloc(stk->data, (stk->capacity / 2 + stk->capacity % 2) * sizeof(stack_elem_t));
-    stk->capacity /= 2;
+    stk->data = (stack_elem_t *) realloc(stk->data, new_capacity * sizeof(stack_elem_t));
+    stk->capacity = new_capacity;
 
     assert(stack_error(stk) == STACK_OK);
     if ((err = stack_error(stk)) != STACK_OK)
