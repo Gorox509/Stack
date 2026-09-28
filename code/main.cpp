@@ -10,6 +10,7 @@
 int main() {
     struct stack stack = {};
     stack_constructor(&stack, 5, __FILE_NAME__, __LINE__, "stack");
+    //stack_constructor(&stack, 5);
 
     ssize_t err = STACK_OK;
     double out = 0.;

@@ -19,7 +19,6 @@ enum STACK_ERRORS {
     STACK_UNDERFLOW = 2,
     STACK_WRONG_DATA_PTR = 3,
     STACK_WRONG_CAPACITY = 4,
-    stack_errors_amount,
 };
 
 

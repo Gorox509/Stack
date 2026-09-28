@@ -3,7 +3,7 @@
 
 ssize_t stack_error(struct stack *stk) {
     assert(stk != NULL);
-
+    ON_DEBUG(
     if (stk->data == NULL && (stk->size != 0 || stk->capacity != 0)) {
         stk->error = STACK_WRONG_DATA_PTR;
         stk->err_name = "STACK_WRONG_DATA_PTR";
@@ -25,8 +25,16 @@ ssize_t stack_error(struct stack *stk) {
         return STACK_WRONG_CAPACITY;
     }
 
+    if (stk->size < 0) {
+        stk->error = STACK_UNDERFLOW;
+        stk->err_name = "STACK_UNDERFLOW";
+        stack_dump(stk);
+        return STACK_UNDERFLOW;
+    }
+
     stk->error = STACK_OK;
     stk->err_name = "STACK_OK";
+    )
     return STACK_OK;
 }
 
