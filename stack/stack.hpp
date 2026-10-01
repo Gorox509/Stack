@@ -48,7 +48,7 @@ struct stack {
     ON_DEBUG(const char *var_name;)
     ON_DEBUG(size_t line;)
     ON_DEBUG(const char *last_called;)
-    ON_DEBUG(int error;)
+    ON_DEBUG(ssize_t error;)
     ON_DEBUG(const char *err_name;)
 
     ON_DEBUG(size_t right_canary = 0;)
@@ -56,6 +56,8 @@ struct stack {
 
 
 ssize_t stack_error         (struct  stack *stk);
+ON_DEBUG(ssize_t stack_apply_error_and_dump
+                            (struct  stack *stk,       ssize_t      err_code,    const char *err_msg);)
 ssize_t stack_assign_data_canaries
                             (struct  stack *stk);
 ssize_t stack_constructor   (struct  stack *stk,       size_t       initial_size

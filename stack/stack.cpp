@@ -8,59 +8,35 @@ ssize_t stack_error(struct stack *stk) {
     assert(stk != NULL);
     ON_DEBUG(
     if (stk->left_canary != GET_CANARY(&stk->left_canary)) {
-        stk->error = STACK_WRONG_LEFT_CANARY;
-        stk->err_name = "STACK_WRONG_LEFT_CANARY";
-        stack_dump(stk);
-        return STACK_WRONG_LEFT_CANARY;
+        return stack_apply_error_and_dump(stk, STACK_WRONG_LEFT_CANARY, "STACK_WRONG_LEFT_CANARY");
     }
 
     if (stk->right_canary != GET_CANARY(&stk->right_canary)) {
-        stk->error = STACK_WRONG_RIGHT_CANARY;
-        stk->err_name = "STACK_WRONG_RIGHT_CANARY";
-        stack_dump(stk);
-        return STACK_WRONG_RIGHT_CANARY;
+        return stack_apply_error_and_dump(stk, STACK_WRONG_RIGHT_CANARY, "STACK_WRONG_RIGHT_CANARY");
     }
 
     if (stk->data_allocated && stk->data == NULL && (stk->size != 0 || stk->capacity != 0)) {
-        stk->error = STACK_WRONG_DATA_PTR;
-        stk->err_name = "STACK_WRONG_DATA_PTR";
-        stack_dump(stk);
-        return STACK_WRONG_DATA_PTR;
+        return stack_apply_error_and_dump(stk, STACK_WRONG_DATA_PTR, "STACK_WRONG_DATA_PTR");
     }
 
     if (stk->size > stk->capacity) {
-        stk->error = STACK_OVERFLOW;
-        stk->err_name = "STACK_OVERFLOW";
-        stack_dump(stk);
-        return STACK_OVERFLOW;
+        return stack_apply_error_and_dump(stk, STACK_OVERFLOW, "STACK_OVERFLOW");
     }
 
     if (stk->capacity == 0 && stk->data != NULL) {
-        stk->error = STACK_WRONG_CAPACITY;
-        stk->err_name = "STACK_WRONG_CAPACITY";
-        stack_dump(stk);
-        return STACK_WRONG_CAPACITY;
+        return stack_apply_error_and_dump(stk, STACK_WRONG_CAPACITY, "STACK_WRONG_CAPACITY");
     }
 
     if (stk->size == (size_t) -1) {
-        stk->error = STACK_UNDERFLOW;
-        stk->err_name = "STACK_UNDERFLOW";
-        stack_dump(stk);
-        return STACK_UNDERFLOW;
+        return stack_apply_error_and_dump(stk, STACK_UNDERFLOW, "STACK_UNDERFLOW");
     }
 
     if (stk->data_allocated && !doubles_equal(stk->data[0], GET_DATA_CANARY(stack_elem_t, &stk->data[0]))) {
-        stk->error = STACK_WRONG_DATA_LEFT_CANARY;
-        stk->err_name = "STACK_WRONG_DATA_LEFT_CANARY";
-        stack_dump(stk);
-        return STACK_WRONG_DATA_LEFT_CANARY;
+        return stack_apply_error_and_dump(stk, STACK_WRONG_DATA_LEFT_CANARY, "STACK_WRONG_DATA_LEFT_CANARY");
     }
 
     if (stk->data_allocated && !doubles_equal(stk->data[stk->capacity + 1], GET_DATA_CANARY(stack_elem_t, &stk->data[stk->capacity + 1]))) {
-        stk->error = STACK_WRONG_DATA_RIGHT_CANARY;
-        stk->err_name = "STACK_WRONG_DATA_RIGHT_CANARY";
-        stack_dump(stk);
-        return STACK_WRONG_DATA_RIGHT_CANARY;
+        return stack_apply_error_and_dump(stk, STACK_WRONG_DATA_RIGHT_CANARY, "STACK_WRONG_DATA_RIGHT_CANARY");
     }
 
     stk->error = STACK_OK;
@@ -68,6 +44,21 @@ ssize_t stack_error(struct stack *stk) {
     )
     return STACK_OK;
 }
+
+
+ON_DEBUG(
+ssize_t stack_apply_error_and_dump(struct stack *stk, ssize_t err_code, const char *err_msg) {
+    assert(stk != NULL);
+    assert(err_msg != NULL);
+
+    stk->error = err_code;
+    stk->err_name = err_msg;
+
+    stack_dump(stk);
+
+    return err_code;
+}
+)
 
 
 ssize_t stack_assign_data_canaries(struct stack *stk) {
@@ -91,7 +82,7 @@ ssize_t stack_assign_data_canaries(struct stack *stk) {
 
 
 ssize_t stack_constructor(struct stack *stk, size_t initial_size
-    ON_DEBUG(, const char *filename, size_t line, const char *var_name))
+                ON_DEBUG(,const char *filename, size_t line, const char *var_name))
 {
     assert(stk != NULL);
     ON_DEBUG(stk->last_called = __func__;)
@@ -262,7 +253,7 @@ void stack_dump(struct stack *stk) {
 
     ON_DEBUG(fprintf(stderr, "\nVariable \"%s\" of type stack at [%p] created in %s:%lu called from function \"%s\":\n",
                     stk->var_name, stk->ptr, stk->origin_filename, stk->line, stk->last_called);)
-    ON_DEBUG(if (stk->error != STACK_OK) fprintf(stderr, "Error code %d: %s\n",
+    ON_DEBUG(if (stk->error != STACK_OK) fprintf(stderr, "Error code %ld: %s\n",
                                                 stk->error, stk->err_name);)
 
     ON_DEBUG(fprintf(stderr, "\tleft  canary value: %lu\texpected canary = %lu\n", stk->left_canary, GET_CANARY(&stk->left_canary));)
