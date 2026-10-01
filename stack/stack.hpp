@@ -31,6 +31,8 @@ enum STACK_ERRORS {
     STACK_WRONG_RIGHT_CANARY,
     STACK_WRONG_DATA_LEFT_CANARY,
     STACK_WRONG_DATA_RIGHT_CANARY,
+    STACK_WRONG_HASH,
+    STACK_WRONG_DATA_HASH,
 };
 
 
@@ -42,6 +44,12 @@ struct stack {
     stack_elem_t *data = NULL;
 
     ON_DEBUG(bool data_allocated = 0;)
+
+    ON_DEBUG(size_t hash = 0;)
+    ON_DEBUG(size_t hash_saved = 0;)
+    ON_DEBUG(size_t hash_expected = 0;)
+
+    ON_DEBUG(size_t data_hash = 0;)
 
     ON_DEBUG(const char *origin_filename;)
     ON_DEBUG(void *ptr;)
@@ -55,21 +63,37 @@ struct stack {
 };
 
 
-ssize_t stack_error         (struct  stack *stk);
+ssize_t stack_error         (struct         stack *stk);
+
 ON_DEBUG(ssize_t stack_apply_error_and_dump
-                            (struct  stack *stk,       ssize_t      err_code,    const char *err_msg);)
+                            (struct         stack *stk,       ssize_t      err_code,    const char *err_msg);)
+ON_DEBUG(size_t stack_calculate_hash
+                            (struct         stack *stk);)
+ON_DEBUG(size_t stack_calculate_data_hash
+                            (const struct   stack *stk);)
+ON_DEBUG(void stack_update_hash
+                            (struct         stack *stk);)
+
+
 ssize_t stack_assign_data_canaries
-                            (struct  stack *stk);
-ssize_t stack_constructor   (struct  stack *stk,       size_t       initial_size
-                ON_DEBUG    (,const  char  *filename,  size_t       line,        const char *var_name));
+                            (struct         stack *stk);
+ssize_t stack_constructor   (struct         stack *stk,       size_t       initial_size
+                ON_DEBUG    (,const         char  *filename,  size_t       line,        const char *var_name));
 
-ssize_t stack_destructor    (struct  stack *stk);
-ssize_t stack_extend        (struct  stack *stk);
-ssize_t stack_shrink        (struct  stack *stk);
-void    stack_push          (struct  stack *stk,       stack_elem_t elem,        ssize_t    *err);
-void    stack_pop           (struct  stack *stk,       stack_elem_t *out,        ssize_t    *err);
-void    stack_dump          (struct  stack *stk);
+ssize_t stack_destructor    (struct         stack *stk);
+ssize_t stack_extend        (struct         stack *stk);
+ssize_t stack_shrink        (struct         stack *stk);
+void    stack_push          (struct         stack *stk,       stack_elem_t elem,        ssize_t    *err);
+void    stack_pop           (struct         stack *stk,       stack_elem_t *out,        ssize_t    *err);
+void    stack_dump          (const struct   stack *stk);
 
-bool    doubles_equal       (long double x,             long double y);
+
+bool    doubles_equal       (const long double x,      const long double y);
+
+
+ON_DEBUG(size_t stack_djb2_hash
+                            (const struct   stack *stk);)
+ON_DEBUG(size_t stack_djb2_data_hash
+                            (const struct   stack *stk);)
 
 #endif
