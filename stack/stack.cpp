@@ -7,14 +7,14 @@
 ssize_t stack_error(struct stack *stk) {
     assert(stk != NULL);
     ON_DEBUG(
-    if (stk->nigger1 != GET_CANARY(&stk->nigger1)) {
+    if (stk->left_canary != GET_CANARY(&stk->left_canary)) {
         stk->error = STACK_WRONG_LEFT_CANARY;
         stk->err_name = "STACK_WRONG_LEFT_CANARY";
         stack_dump(stk);
         return STACK_WRONG_LEFT_CANARY;
     }
 
-    if (stk->nigger2 != GET_CANARY(&stk->nigger2)) {
+    if (stk->right_canary != GET_CANARY(&stk->right_canary)) {
         stk->error = STACK_WRONG_RIGHT_CANARY;
         stk->err_name = "STACK_WRONG_RIGHT_CANARY";
         stack_dump(stk);
@@ -96,8 +96,8 @@ ssize_t stack_constructor(struct stack *stk, size_t initial_size
     assert(stk != NULL);
     ON_DEBUG(stk->last_called = __func__;)
 
-    ON_DEBUG(stk->nigger1 = GET_CANARY(&stk->nigger1);)
-    ON_DEBUG(stk->nigger2 = GET_CANARY(&stk->nigger2);)
+    ON_DEBUG(stk->left_canary = GET_CANARY(&stk->left_canary);)
+    ON_DEBUG(stk->right_canary = GET_CANARY(&stk->right_canary);)
 
     ssize_t err = STACK_OK;
 
@@ -265,8 +265,8 @@ void stack_dump(struct stack *stk) {
     ON_DEBUG(if (stk->error != STACK_OK) fprintf(stderr, "Error code %d: %s\n",
                                                 stk->error, stk->err_name);)
 
-    ON_DEBUG(fprintf(stderr, "\tleft  canary value: %lu\texpected canary = %lu\n", stk->nigger1, GET_CANARY(&stk->nigger1));)
-    ON_DEBUG(fprintf(stderr, "\tright canary value: %lu\texpected canary = %lu\n", stk->nigger2, GET_CANARY(&stk->nigger2));)
+    ON_DEBUG(fprintf(stderr, "\tleft  canary value: %lu\texpected canary = %lu\n", stk->left_canary, GET_CANARY(&stk->left_canary));)
+    ON_DEBUG(fprintf(stderr, "\tright canary value: %lu\texpected canary = %lu\n", stk->right_canary, GET_CANARY(&stk->right_canary));)
 
     fprintf(stderr, "\tsize: %lu\n"
                     "\tcapacity: %lu\n"

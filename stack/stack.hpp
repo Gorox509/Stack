@@ -35,7 +35,7 @@ enum STACK_ERRORS {
 
 
 struct stack {
-    ON_DEBUG(size_t nigger1 = 0;)
+    ON_DEBUG(size_t left_canary = 0;)
 
     size_t size = 0;
     size_t capacity = 0;
@@ -51,7 +51,7 @@ struct stack {
     ON_DEBUG(int error;)
     ON_DEBUG(const char *err_name;)
 
-    ON_DEBUG(size_t nigger2 = 0;)
+    ON_DEBUG(size_t right_canary = 0;)
 };
 
 
