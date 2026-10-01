@@ -265,21 +265,25 @@ void stack_dump(struct stack *stk) {
     ON_DEBUG(if (stk->error != STACK_OK) fprintf(stderr, "Error code %d: %s\n",
                                                 stk->error, stk->err_name);)
 
-    ON_DEBUG(fprintf(stderr, "\tleft  canary value: %lu\n", stk->nigger1);)
-    ON_DEBUG(fprintf(stderr, "\tright canary value: %lu\n", stk->nigger2);)
+    ON_DEBUG(fprintf(stderr, "\tleft  canary value: %lu\texpected canary = %lu\n", stk->nigger1, GET_CANARY(&stk->nigger1));)
+    ON_DEBUG(fprintf(stderr, "\tright canary value: %lu\texpected canary = %lu\n", stk->nigger2, GET_CANARY(&stk->nigger2));)
 
     fprintf(stderr, "\tsize: %lu\n"
                     "\tcapacity: %lu\n"
                     "\tdata: [%p]\n"
     , stk->size, stk->capacity, stk->data
     );
-    ON_DEBUG(fprintf(stderr, "\t\t  data[%lu] = % lf\n", 0LU, stk->data[0]);)
-    for (size_t i = 0 ON_DEBUG(+1); i < stk->size ON_DEBUG(+1) && i < stk->capacity ON_DEBUG(+1); ++i) { // min(size, cap)
-        fprintf(stderr, "\t\t* data[%lu] = % lf\n", i, stk->data[i]);
-    }
+    if (stk->data != NULL)
+    {
+        ON_DEBUG(fprintf(stderr, "\t\t  data[%lu] = % lg;\texpected canary = %lg\n", 0LU, stk->data[0], GET_DATA_CANARY(stack_elem_t, &stk->data[0]));)
+        for (size_t i = 0 ON_DEBUG(+1); i < stk->size ON_DEBUG(+1) && i < stk->capacity ON_DEBUG(+1); ++i) { // min(size, cap)
+            fprintf(stderr, "\t\t* data[%lu] = % lg\n", i, stk->data[i]);
+        }
 
-    for (size_t i = stk->size ON_DEBUG(+1); i < stk->capacity ON_DEBUG(+2) || i < stk->size ON_DEBUG(+2); ++i) { // max(size, cap)
-        fprintf(stderr, "\t\t  data[%lu] = % lf\n", i, stk->data[i]);
+        for (size_t i = stk->size ON_DEBUG(+1); i < stk->capacity ON_DEBUG(+1) || i < stk->size ON_DEBUG(+1); ++i) { // max(size, cap)
+            fprintf(stderr, "\t\t  data[%lu] = % lg\n", i, stk->data[i]);
+        }
+        ON_DEBUG(fprintf(stderr, "\t\t  data[%lu] = % lg;\texpected canary = %lg\n", stk->capacity + 1, stk->data[stk->capacity + 1], GET_DATA_CANARY(stack_elem_t, &stk->data[stk->capacity + 1]));)
     }
 
     fprintf(stderr, "\n\n");
@@ -287,5 +291,5 @@ void stack_dump(struct stack *stk) {
 
 
 bool doubles_equal(long double x, long double y) {
-    return (abs(x) - abs(y) < 10e-6);
+    return ((abs(x - y)) < 10e-6);
 }

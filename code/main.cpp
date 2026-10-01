@@ -1,9 +1,4 @@
-#define NDEBUG
-#define STACK_DEBUG
-
-#include <stdio.h>
 #include "../stack/stack.hpp"
-#include "../stack/stack.cpp"
 
 
 int main() {
@@ -42,6 +37,7 @@ int main() {
 
     stack_pop(&stack, &out, &err);
     fprintf(stderr, "Output: %lf\n", out); stack_dump(&stack);
+
 
     stack_destructor(&stack);
 

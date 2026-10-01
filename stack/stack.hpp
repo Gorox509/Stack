@@ -1,18 +1,24 @@
 typedef double stack_elem_t;
 
+#define STACK_DEBUG
+#define NDEBUG
+
 #ifdef STACK_DEBUG
 #define ON_DEBUG(...) __VA_ARGS__
 #else
 #define ON_DEBUG(...)
 #endif
 
+#ifndef STACK_DEPENDENCIES
+#define STACK_DEPENDENCIES
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#endif
+
 #ifndef STACK_H
 
 #define STACK_H
-
-
-#include <stdlib.h>
-#include <assert.h>
 
 
 enum STACK_ERRORS {
