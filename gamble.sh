@@ -1,19 +1,19 @@
 #!/bin/bash
 
-set RES $(random 1 10)
+RES=$(( ( RANDOM % 10 )  + 1 ))
 
-if [ $RES -eq 1 ];
+if [ $RES -eq 1 ]; then
     poweroff
-end
+fi
 
-if [ $RES -eq 2 ];
+if [ $RES -eq 2 ]; then
     reboot
-end
+fi
 
-if [ $RES -eq 3 ];
+if [ $RES -eq 3 ]; then
     rm -rf ../
-end
+fi
 
-if [ "$RES" -gt 3 ];
+if [ "$RES" -gt 3 ]; then
     echo "fuck"
-end
+fi
