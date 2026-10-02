@@ -1,10 +1,7 @@
+#ifndef STACK_H
+#define STACK_H
+
 typedef double stack_elem_t;
-
-#define STACK_DEBUG
-#define CANARY_PROT
-#define HASH_PROT
-
-#define NDEBUG
 
 #ifdef STACK_DEBUG
 #define ON_DEBUG(...) __VA_ARGS__
@@ -30,10 +27,6 @@ typedef double stack_elem_t;
 #include <stdio.h>
 #include <assert.h>
 #endif
-
-#ifndef STACK_H
-
-#define STACK_H
 
 
 enum STACK_ERRORS {
@@ -66,30 +59,33 @@ struct stack {
 
     bool data_allocated = 0;
 
-    ON_HASH_PROT(size_t hash = 0;)
-    ON_HASH_PROT(size_t hash_saved = 0;)
-    ON_HASH_PROT(size_t hash_expected = 0;)
-
-    ON_HASH_PROT(size_t data_hash = 0;)
-
-    ON_DEBUG(const char *origin_filename;)
-    ON_DEBUG(void *ptr;)
-    ON_DEBUG(const char *var_name;)
-    ON_DEBUG(size_t line;)
-    ON_DEBUG(const char *last_called;)
-    ON_DEBUG(ssize_t error;)
-    ON_DEBUG(const char *err_name;)
+    ON_DEBUG(struct stack_err_struct *err_struct;)
 
     ON_CANARY_PROT(size_t right_canary = 0;)
 };
 
+ON_DEBUG(
+struct stack_err_struct {
+    const char *origin_filename;
+    struct stack *origin_ptr;
+    const char *var_name;
+    size_t line;
+    const char *last_called;
+    ssize_t error;
+    const char *err_name;
+
+    ON_HASH_PROT(
+    size_t hash = 0;
+    size_t data_hash = 0;
+    )
+};
+)
+
 
 ssize_t stack_error         (struct         stack *stk);
 
-ssize_t stack_apply_error_and_dump
-                            (struct         stack *stk,       ssize_t      err_code,    const char *err_msg);
 ON_HASH_PROT(size_t stack_calculate_hash
-                            (struct         stack *stk);)
+                            (const struct   stack *stk);)
 ON_HASH_PROT(size_t stack_calculate_data_hash
                             (const struct   stack *stk);)
 ON_HASH_PROT(void stack_update_hash
