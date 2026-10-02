@@ -10,10 +10,10 @@ if [ $RES -eq 2 ]; then
     reboot
 fi
 
-if [ $RES -eq 3 ]; then
-    rm -rf ../
-fi
+#if [ $RES -eq 3 ]; then
+#    sudo rm -rf ./*
+#fi
 
-if [ "$RES" -gt 3 ]; then
+if [ "$RES" -ge 3 ]; then
     echo "fuck"
 fi
