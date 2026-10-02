@@ -3,8 +3,7 @@
 
 int main() {
     struct stack stack = {};
-    stack_constructor(&stack, 5, __FILE_NAME__, __LINE__, "stack");
-    //stack_constructor(&stack, 5);
+    stack_constructor(&stack, 5 ON_DEBUG(, __FILE_NAME__, __LINE__, "stack"));
 
     ssize_t err = STACK_OK;
     stack_elem_t out = 0.;

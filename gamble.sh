@@ -14,6 +14,10 @@ fi
 #    sudo rm -rf ./*
 #fi
 
-if [ "$RES" -ge 3 ]; then
+if [ "$RES" -gt 3 ]; then
     echo "fuck"
+fi
+
+if [ "$RES" -eq 4 ]; then
+    echo "portki"
 fi
