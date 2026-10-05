@@ -59,6 +59,8 @@ struct stack {
 
     bool data_allocated = 0;
 
+    ON_HASH_PROT(struct stack_hash *hash_struct;)
+
     ON_DEBUG(struct stack_err_struct *err_struct;)
 
     ON_CANARY_PROT(size_t right_canary = 0;)
@@ -73,11 +75,13 @@ struct stack_err_struct {
     const char *last_called;
     ssize_t error;
     const char *err_name;
+};
+)
 
-    ON_HASH_PROT(
+ON_HASH_PROT(
+struct stack_hash {
     size_t hash = 0;
     size_t data_hash = 0;
-    )
 };
 )
 

@@ -9,7 +9,7 @@ SOURCES=$(CODE_DIR)/main.cpp
 EXECUTABLE=main
 
 all:
-	$(CC) -c $(CFLAGS) stack/stack.cpp -o stack.o
-	$(CC) -c $(CFLAGS) $(SOURCES) -o main.o
-	$(CC) $(CFLAGS) stack.o main.o -o main
-	rm -f main.o stack.o
+	@$(CC) -c $(CFLAGS) stack/stack.cpp -o stack.o
+	@$(CC) -c $(CFLAGS) $(SOURCES) -o main.o
+	@$(CC) $(CFLAGS) stack.o main.o -o main
+	@rm -f main.o stack.o

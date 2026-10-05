@@ -34,11 +34,11 @@ ssize_t stack_error(struct stack *const stk) {
 
 
     ON_HASH_PROT(
-    if (stk->err_struct->hash != stack_calculate_hash(stk)) {
+    if (stk->data_allocated && stk->hash_struct->hash != stack_calculate_hash(stk)) {
         return stack_apply_error_and_dump(stk, ERROR_CODE_TO_CODE_AND_TEXT(STACK_WRONG_HASH));
     }
 
-    if (stk->data_allocated && stk->err_struct->data_hash != stack_calculate_data_hash(stk)) {
+    if (stk->data_allocated && stk->hash_struct->data_hash != stack_calculate_data_hash(stk)) {
         return stack_apply_error_and_dump(stk, ERROR_CODE_TO_CODE_AND_TEXT(STACK_WRONG_DATA_HASH));
     }
     )
@@ -63,13 +63,14 @@ ssize_t stack_error(struct stack *const stk) {
 
 
     ON_DEBUG(
-    stk->err_struct->error = STACK_OK;
-    stk->err_struct->err_name = "STACK_OK";
+    if (stk->data_allocated && stk->err_struct != NULL) {
+        stk->err_struct->error = STACK_OK;
+        stk->err_struct->err_name = "STACK_OK";
+    }
     )
 
-    ON_HASH_PROT(
-    stack_update_hash(stk);
-    )
+    ON_HASH_PROT(if (stk->data_allocated && stk->hash_struct != NULL) stack_update_hash(stk);)
+
     return STACK_OK;
 }
 
@@ -80,11 +81,13 @@ ssize_t stack_apply_error_and_dump(struct stack *const stk, ssize_t err_code, co
     assert(err_msg != NULL);
 
     ON_DEBUG(
-    stk->err_struct->error = err_code;
-    stk->err_struct->err_name = err_msg;
+    if (stk->err_struct != NULL && stk->data_allocated) {
+        stk->err_struct->error = err_code;
+        stk->err_struct->err_name = err_msg;
+    }
     )
 
-    ON_HASH_PROT(stk->err_struct->hash = stack_calculate_hash(stk);)
+    ON_HASH_PROT(if (stk->hash_struct != NULL && stk->data_allocated) stk->hash_struct->hash = stack_calculate_hash(stk);)
 
     stack_dump(stk);
 
@@ -117,8 +120,8 @@ ON_HASH_PROT(
 void stack_update_hash(struct stack *const stk) {
     assert(stk != NULL);
 
-    stk->err_struct->data_hash = stack_calculate_data_hash(stk);
-    stk->err_struct->hash = stack_calculate_hash(stk);
+    stk->hash_struct->data_hash = stack_calculate_data_hash(stk);
+    stk->hash_struct->hash = stack_calculate_hash(stk);
 }
 )
 
@@ -126,10 +129,15 @@ void stack_update_hash(struct stack *const stk) {
 ON_CANARY_PROT(
 ssize_t stack_assign_data_canaries(struct stack *const stk) {
     assert(stk != NULL);
-    ON_DEBUG(stk->err_struct->last_called = __func__;)
-    ON_HASH_PROT(stack_update_hash(stk);)
 
     ssize_t err = STACK_OK;
+
+    assert(stack_error(stk) == STACK_OK);
+    if ((err = stack_error(stk)) != STACK_OK)
+        return err;
+
+    ON_DEBUG(stk->err_struct->last_called = __func__;)
+    ON_HASH_PROT(stack_update_hash(stk);)
 
     assert(stack_error(stk) == STACK_OK);
     if ((err = stack_error(stk)) != STACK_OK)
@@ -153,18 +161,21 @@ ssize_t stack_constructor(struct stack *const stk, size_t initial_size
 {
     assert(stk != NULL);
     ON_DEBUG(stk->err_struct = (struct stack_err_struct *) malloc(sizeof(struct stack_err_struct));)
+    ON_DEBUG(if (stk->err_struct == NULL) exit(1);)
     ON_DEBUG(stk->err_struct->last_called = __func__;)
+
+    ON_HASH_PROT(stk->hash_struct = (struct stack_hash *) malloc(sizeof(struct stack_hash));)
+    ON_HASH_PROT(if (stk->hash_struct == NULL) exit(1);)
 
     ON_CANARY_PROT(stk->left_canary = GET_CANARY(&stk->left_canary);)
     ON_CANARY_PROT(stk->right_canary = GET_CANARY(&stk->right_canary);)
 
     ssize_t err = STACK_OK;
 
-    ON_HASH_PROT(stk->err_struct->hash = stack_calculate_hash(stk);)
+    ON_HASH_PROT(stk->hash_struct->hash = stack_calculate_hash(stk);)
 
     assert(stack_error(stk) == STACK_OK);
     err = stack_error(stk);
-
     if (err != STACK_OK)
         return err;
 
@@ -172,6 +183,8 @@ ssize_t stack_constructor(struct stack *const stk, size_t initial_size
 
     stk->size = 0;
     stk->capacity = initial_size;
+
+    ON_HASH_PROT(stack_update_hash(stk);)
 
     ON_CANARY_PROT(
     if ((err = stack_assign_data_canaries(stk)) != STACK_OK)
@@ -197,21 +210,30 @@ ssize_t stack_constructor(struct stack *const stk, size_t initial_size
 
 ssize_t stack_destructor(struct stack *const stk) {
     assert(stk != NULL);
+
+    ssize_t err = STACK_OK;
+
+    assert(stack_error(stk) == STACK_OK);
+    if ((err = stack_error(stk)) != STACK_OK)
+        return err;
+
+
     ON_DEBUG(stk->err_struct->last_called = __func__;)
     ON_HASH_PROT(stack_update_hash(stk);)
 
     assert(stack_error(stk) == STACK_OK);
-    ssize_t err = stack_error(stk);
+    err = stack_error(stk);
 
     if (err != STACK_OK)
         return err;
 
     free(stk->data);
     ON_DEBUG(free(stk->err_struct);)
+    ON_HASH_PROT(free(stk->hash_struct);)
     stk->data = NULL;
+    ON_DEBUG(stk->err_struct = NULL;)
+    ON_HASH_PROT(stk->hash_struct = NULL;)
     stk->data_allocated = 0;
-
-    ON_HASH_PROT(stack_update_hash(stk);)
 
     assert(stack_error(stk) == STACK_OK);
     err = stack_error(stk);
@@ -222,9 +244,14 @@ ssize_t stack_destructor(struct stack *const stk) {
 
 ssize_t stack_extend(struct stack *const stk) {
     assert(stk != NULL);
-    ON_DEBUG(stk->err_struct->last_called = __func__;)
 
     ssize_t err = STACK_OK;
+
+    assert(stack_error(stk) == STACK_OK);
+    if ((err = stack_error(stk)) != STACK_OK)
+        return err;
+
+    ON_DEBUG(stk->err_struct->last_called = __func__;)
 
     stk->data_allocated = 0;
 
@@ -234,6 +261,8 @@ ssize_t stack_extend(struct stack *const stk) {
 
     stk->capacity *= 2;
     stk->data = (stack_elem_t *) realloc((void *) stk->data, (stk->capacity ON_CANARY_PROT(+2)) * sizeof(stack_elem_t));
+
+    ON_HASH_PROT(stack_update_hash(stk);)
 
     ON_CANARY_PROT(
     if ((err = stack_assign_data_canaries(stk)) != STACK_OK)
@@ -253,9 +282,15 @@ ssize_t stack_extend(struct stack *const stk) {
 
 ssize_t stack_shrink(struct stack *const stk) {
     assert(stk != NULL);
-    ON_DEBUG(stk->err_struct->last_called = __func__;)
 
     ssize_t err = STACK_OK;
+
+    assert(stack_error(stk) == STACK_OK);
+    if ((err = stack_error(stk)) != STACK_OK)
+        return err;
+
+
+    ON_DEBUG(stk->err_struct->last_called = __func__;)
 
     stk->data_allocated = 0;
 
@@ -267,6 +302,8 @@ ssize_t stack_shrink(struct stack *const stk) {
 
     stk->data = (stack_elem_t *) realloc(stk->data, (new_capacity ON_CANARY_PROT(+2)) * sizeof(stack_elem_t));
     stk->capacity = new_capacity;
+
+    ON_HASH_PROT(stack_update_hash(stk);)
 
     ON_CANARY_PROT(
     if ((err = stack_assign_data_canaries(stk)) != STACK_OK)
@@ -287,6 +324,11 @@ ssize_t stack_shrink(struct stack *const stk) {
 void stack_push(struct stack *const stk, stack_elem_t elem, ssize_t *err) {
     assert(stk != NULL);
     assert(err != NULL);
+
+    assert(stack_error(stk) == STACK_OK);
+    if ((*err = stack_error(stk)) != STACK_OK)
+        return;
+
     ON_DEBUG(stk->err_struct->last_called = __func__;)
 
     ON_HASH_PROT(stack_update_hash(stk);)
@@ -312,6 +354,11 @@ void stack_push(struct stack *const stk, stack_elem_t elem, ssize_t *err) {
 void stack_pop(struct stack *const stk, stack_elem_t *out, ssize_t *err) {
     assert(stk != NULL);
     assert(err != NULL);
+
+    assert(stack_error(stk) == STACK_OK);
+    if ((*err = stack_error(stk)) != STACK_OK)
+        return;
+
     ON_DEBUG(stk->err_struct->last_called = __func__;)
 
     ON_HASH_PROT(stack_update_hash(stk);)
@@ -320,6 +367,8 @@ void stack_pop(struct stack *const stk, stack_elem_t *out, ssize_t *err) {
         return;
 
     *out = stk->data[--stk->size ON_CANARY_PROT(+1)];
+
+    ON_HASH_PROT(stack_update_hash(stk);)
 
     while (stk->capacity > 1 && stk->size * 4 < stk->capacity) {
         if ((*err = stack_shrink(stk)) != STACK_OK)
@@ -337,16 +386,30 @@ void stack_pop(struct stack *const stk, stack_elem_t *out, ssize_t *err) {
 void stack_dump(const struct stack *const stk) {
     assert(stk != NULL);
 
+    ON_DEBUG(
+    if (stk->err_struct == NULL) {
+        fprintf(stderr, "Stack dumping is not safe. Stack is probably uninitialized or destructed.\n");
+        return;
+    }
+    )
 
-    ON_DEBUG(fprintf(stderr, "\nVariable \"%s\" of type stack at [%p] created in %s:%lu called from function \"%s\":\n",
+    ON_HASH_PROT(
+    if (stk->hash_struct == NULL) {
+        fprintf(stderr, "Stack dumping is not safe. Stack is probably uninitialized or destructed.\n");
+        return;
+    }
+    )
+
+    fprintf(stderr, "\nDumping stack structure:\n");
+    ON_DEBUG(fprintf(stderr, "Variable \"%s\" of type stack at [%p] created in %s:%lu called from function \"%s\":\n",
                     stk->err_struct->var_name, stk->err_struct->origin_ptr, stk->err_struct->origin_filename, stk->err_struct->line, stk->err_struct->last_called);)
     ON_DEBUG(if (stk->err_struct->error != STACK_OK) fprintf(stderr, RED "Error code %ld: %s\n" BASE_CLR,
                                                 stk->err_struct->error, stk->err_struct->err_name);)
 
     ON_CANARY_PROT(fprintf(stderr, "\tleft  canary value: %lu\texpected canary: %lu\n", stk->left_canary, GET_CANARY(&stk->left_canary));)
     ON_CANARY_PROT(fprintf(stderr, "\tright canary value: %lu\texpected canary: %lu\n", stk->right_canary, GET_CANARY(&stk->right_canary));)
-    ON_HASH_PROT(  fprintf(stderr, "\thash:               %lx\texpected hash  : %lx\n", stk->err_struct->hash, stack_calculate_hash(stk));)
-    ON_HASH_PROT(  fprintf(stderr, "\tdata hash:          %lx\texpected       : %lx\n", stk->err_struct->data_hash, stack_calculate_data_hash(stk));)
+    ON_HASH_PROT(  fprintf(stderr, "\thash:               %lx\texpected hash  : %lx\n", stk->hash_struct->hash, stack_calculate_hash(stk));)
+    ON_HASH_PROT(  fprintf(stderr, "\tdata hash:          %lx\texpected       : %lx\n", stk->hash_struct->data_hash, stack_calculate_data_hash(stk));)
 
     fprintf(stderr, "\tsize: %lu\n"
                     "\tcapacity: %lu\n"
@@ -363,7 +426,7 @@ void stack_dump(const struct stack *const stk) {
             fprintf(stderr, "\t\t* data[%lu] = % lg\n", i, stk->data[i]);
         }
 
-        for (size_t i = min_size ON_DEBUG(+1); i < max_size ON_CANARY_PROT(+1); ++i) {
+        for (size_t i = min_size ON_CANARY_PROT(+1); i < max_size ON_CANARY_PROT(+1); ++i) {
             fprintf(stderr, "\t\t  data[%lu] = % lg\n", i, stk->data[i]);
         }
         ON_CANARY_PROT(fprintf(stderr, "\t\t  data[%lu] = % lg;\texpected canary = %lg\n", max_size + 1, stk->data[max_size + 1], GET_DATA_CANARY(stack_elem_t, &stk->data[max_size + 1]));)
