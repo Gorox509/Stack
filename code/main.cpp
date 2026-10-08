@@ -1,4 +1,5 @@
 #include "../stack/stack.hpp"
+#include <stdio.h>
 
 
 int main() {
